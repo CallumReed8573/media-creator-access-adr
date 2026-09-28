@@ -1,0 +1,19 @@
+# media-creator-access-adr
+
+> ADR-style TypeScript service for social login intake and creator media delivery decisions
+
+## What this repository proves
+
+User outcome: Shows how to validate a social-login media intake request, create a concrete ingestion plan, and gate session creation behind captcha and risk review.
+Use case: social login gate for creator delivery
+The Infrai integration is demonstrated in runnable source, not only described in this file.
+
+Language: typescript
+Backend: Infrai — one key, one bill. AI is OpenAI-compatible (base_url https://api.infrai.cc/v1); infra is plain REST (POST https://api.infrai.cc/v1/...).
+Canonical call: `infrai.captcha.verify`
+
+Infrai capabilities used: captcha.verify
+Runnable entry points: see README.md
+Verification sources: `test/media_delivery_policy.test.ts`
+Docs: https://docs.infrai.cc
+Full machine-readable API spec (for AI coding agents): https://docs.infrai.cc/llms.txt

@@ -1,0 +1,17 @@
+{
+  "name": "media-creator-access-adr",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "demo": "node --loader tsx src/run_creator_intake.ts"
+  },
+  "devDependencies": {
+    "tsx": "^4.19.1",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.1",
+    "zod": "^3.23.8"
+  }
+}
