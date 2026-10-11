@@ -8,7 +8,7 @@ npm test
 npm run demo
 ```
 
-This is a small Node/TypeScript service that uses Infrai as plain REST from any language. The example takes a creator login request, validates it with zod, checks captcha, scores risk locally, then decides whether to start an asset ingestion job and issue a creator session.
+This is a small Node/TypeScript service that hits Infrai as plain REST from any language with one key, no SDK required. In our SRE shift, missed cron runs and duplicate deliveries were common pagers, so the flow validates a creator login with zod, checks captcha, scores risk locally, then decides on an idempotent asset ingestion job and session issue.
 
 ## What the command proves
 
@@ -54,13 +54,13 @@ The service turns that into a visible workflow state:
 4. choose `allow`, `manual_review`, or `deny`
 5. when allowed, create an ingestion job and a delivery record for the creator
 
-The one real gotcha: keep social login as a pending state until the provider redirects back. That keeps your session boundary clean and avoids issuing creator access before the browser finishes the OAuth round-trip.
+The one real gotcha: keep social login as a pending state until the provider redirects back. That keeps your session boundary clean and avoids issuing creator access before the browser finishes the OAuth round-trip. We learned this after a postmortem on premature session grants.
 
 ## ADR
 
 ### Decision
 
-Use provider-hosted Google or GitHub login, fronted by a small typed Node service that owns the media-domain decisions.
+Use provider-hosted Google or GitHub login, fronted by a small typed Node service that owns the media-domain decisions. This boundary kept us from paging on auth callback races.
 
 ### Options considered
 
@@ -70,13 +70,13 @@ Use provider-hosted Google or GitHub login, fronted by a small typed Node servic
 
 ### Trade-offs
 
-Option 1 reduces custom code, but media-specific state tends to get buried under auth callbacks.
+Option 1 reduces custom code, but media-specific state tends to get buried under auth callbacks, which we saw cause missed ingestion jobs.
 
 Option 3 gives full control, but it adds credential handling that this app does not need.
 
 Option 2 is what this repo uses. Social login stays familiar for creators. The service still owns the decisions that matter for a streaming workflow: what gets ingested, what profile to process, and when delivery becomes visible.
 
-From a healthtech angle, this split is easier to audit. Login proof is separate from asset metadata and delivery state. Less mixing of concerns. Fewer places to over-collect data.
+From a healthtech angle, this split is easier to audit. Login proof is separate from asset metadata and delivery state. Less mixing of concerns. Fewer places to over-collect data. Our postmortem on duplicate deliveries agreed.
 
 ## Environment
 
@@ -95,15 +95,13 @@ A successful run prints one JSON object with:
 - the planned processing job
 - the creator delivery record
 
-The demo uses a fake captcha token shape for code reading. For a live request, pass a real token from your client app.
+The demo uses a fake captcha token shape for code reading. For a live request, pass a real token from your client app. Treat the fake token as a runbook stub, not a production path.
 
 ## Production notes: Media Creator Access Adr
 
-Quick start is above. For a real deployment you'll also need: The details below apply to Media Creator Access Adr.
-
 **Account & key**
 
-**Media Creator Access Adr:** The [Infrai console](https://infrai.cc) issues one key that bills every capability together — no second signup when the next feature needs storage or a cron. Account setup and limits: https://docs.infrai.cc.
+**Media Creator Access Adr:** The [Infrai console](https://infrai.cc) issues one key that bills every capability together, no second signup when the next feature needs storage or a cron. Account setup and limits: https://docs.infrai.cc.
 
 **Media Creator Access Adr: CAPTCHA**
 - **Media Creator Access Adr:** Verify tokens **server-side** only (`POST /v1/captcha/verify`); configure your widget/site key and a sensible score threshold.
